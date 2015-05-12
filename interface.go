@@ -19,8 +19,14 @@ type Store interface {
 	Ref(digest string) (Descriptor, error)
 	// Deref decrements the reference count for the blob with the given digest.
 	// If no references to the blob remain, the blob will be removed from the
-	// store.
+	// store and blobs to which it links will also be dereferenced.
 	Deref(digest string) error
+	// Link sets up a link between the blobs referenced by digests *to* and
+	// *from*. Assumes an implicit reference from *from* to *to*.
+	Link(to, from string) error
+	// Unlink removes a link between the blobs referenced by digests *to* and
+	// *from*. Also dereferences the *to* blob.
+	Unlink(to, from string) error
 }
 
 // BlobWriter provides a handle for writing a new blob to the blob store.
@@ -43,6 +49,7 @@ type Descriptor interface {
 	Digest() string
 	Size() uint64
 	RefCount() uint64
+	Links() (linksTo []string)
 }
 
 // Blob is the interface for accessing a blob.

@@ -18,9 +18,9 @@ func (ls *localStore) Ref(digest string) (d Descriptor, err error) {
 	return
 }
 
-// Deref decrements the reference count for the blob with the given digest.
-// If the reference count reaches 0, the blob will be removed from the
-// store.
+// Deref decrements the reference count for the blob with the given digest. If
+// no references to the blob remain, the blob will be removed from the store
+// and blobs to which it links will also be dereferenced.
 func (ls *localStore) Deref(digest string) error {
 	ls.Lock()
 	defer ls.Unlock()
@@ -59,10 +59,19 @@ func (ls *localStore) deref(digest string) *storeError {
 		return err
 	}
 
-	info.RefCount--
+	if info.RefCount > 0 { // Be careful to not overflow.
+		info.RefCount--
+	}
 
 	if info.RefCount > 0 {
 		return ls.putBlobInfo(info)
+	}
+
+	// Dereference blobs to which this one links.
+	for _, linkTo := range info.LinksTo {
+		if err = ls.deref(linkTo); !(err == nil || err.IsBlobNotExists()) {
+			return err
+		}
 	}
 
 	blobDirname := ls.blobDirname(digest)

@@ -1,10 +1,11 @@
 package blobstore
 
 type blobInfo struct {
-	Digest    string `json:"digest"`
-	MediaType string `json:"mediaType"`
-	Size      uint64 `json:"size"`
-	RefCount  uint64 `json:"refCount"`
+	Digest    string   `json:"digest"`
+	MediaType string   `json:"mediaType"`
+	Size      uint64   `json:"size"`
+	RefCount  uint64   `json:"refCount"`
+	LinksTo   []string `json:"linksTo"`
 }
 
 type descriptor struct {
@@ -29,4 +30,8 @@ func (d *descriptor) Size() uint64 {
 
 func (d *descriptor) RefCount() uint64 {
 	return d.blobInfo.RefCount
+}
+
+func (d *descriptor) Links() (linksTo []string) {
+	return d.LinksTo
 }
