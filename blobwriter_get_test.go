@@ -20,9 +20,7 @@ func TestWriteGetRoundtrip(t *testing.T) {
 }
 
 func testWriteGetRoundtrip(t *testing.T, testStore *localStore) {
-	refID := "testWriteGetRoundtripRef"
-
-	d := writeRandomBlob(t, testStore, 20480, refID)
+	d := writeRandomBlob(t, testStore, 20480)
 
 	b, err := testStore.Get(d.Digest())
 	if err != nil {
@@ -31,10 +29,6 @@ func testWriteGetRoundtrip(t *testing.T, testStore *localStore) {
 
 	if b.Size() != d.Size() {
 		t.Fatalf("expected blob size to be %d, got %d", d.Size(), b.Size())
-	}
-
-	if b.MediaType() != randomDataMediaType {
-		t.Fatalf("expected blob media type to be %d, got %d", randomDataMediaType, b.MediaType())
 	}
 
 	if b.Digest() != d.Digest() {

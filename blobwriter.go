@@ -77,7 +77,7 @@ func (bw *blobWriter) Digest() string {
 	return fmt.Sprintf("%s:%x", bw.hashLabel, bw.hasher.Sum(nil))
 }
 
-func (bw *blobWriter) Commit(mediaType, refID string) (d Descriptor, err error) {
+func (bw *blobWriter) Commit() (d Descriptor, err error) {
 	defer bw.Cancel()
 
 	// Close the tempFile.
@@ -91,7 +91,7 @@ func (bw *blobWriter) Commit(mediaType, refID string) (d Descriptor, err error) 
 	defer bw.store.Unlock()
 
 	// Is there already a blob with this digest in the store?
-	d, blobErr := bw.store.ref(digest, refID)
+	d, blobErr := bw.store.ref(digest)
 	if blobErr == nil {
 		return d, nil
 	}
@@ -107,10 +107,9 @@ func (bw *blobWriter) Commit(mediaType, refID string) (d Descriptor, err error) 
 	}
 
 	info := blobInfo{
-		Digest:     digest,
-		MediaType:  mediaType,
-		Size:       uint64(stat.Size()),
-		References: []string{refID},
+		Digest:   digest,
+		Size:     uint64(stat.Size()),
+		RefCount: 1,
 	}
 
 	// Blow away this new blob directory if there's any error later.

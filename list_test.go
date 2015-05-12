@@ -12,7 +12,7 @@ func testList(t *testing.T, testStore *localStore) {
 	// Make 10 random content blobs.
 	expectedDigests := make([]string, 10)
 	for i := range expectedDigests {
-		d := writeRandomBlob(t, testStore, 10240, "someRef")
+		d := writeRandomBlob(t, testStore, 10240)
 		expectedDigests[i] = d.Digest()
 	}
 

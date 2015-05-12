@@ -15,12 +15,12 @@ type Store interface {
 	// NewWriter begins the process of writing a new blob using the given hash
 	// to compute the digest.
 	NewWriter(crypto.Hash) (BlobWriter, error)
-	// Ref associates a reference ID with the blob with the given digest.
-	Ref(digest, refID string) (Descriptor, error)
-	// Deref dissociates a reference ID with the blob with the given digest.
+	// Ref increments the reference count for the blob with the given digest.
+	Ref(digest string) (Descriptor, error)
+	// Deref decrements the reference count for the blob with the given digest.
 	// If no references to the blob remain, the blob will be removed from the
 	// store.
-	Deref(digest, refID string) error
+	Deref(digest string) error
 }
 
 // BlobWriter provides a handle for writing a new blob to the blob store.
@@ -29,10 +29,10 @@ type BlobWriter interface {
 	// Digest returns the digest of the data which has been written so far.
 	Digest() string
 	// Commit completes the blob writing process. The new blob is stored with
-	// the given mediaType and starting RefID. If another blob already exists
-	// with the same computed digest then the reference is added to that blob.
-	// If there is an error, it is of type Error.
-	Commit(mediaType, refID string) (Descriptor, error)
+	// the given mediaType and starting refcount of 1. If another blob already
+	// exists with the same computed digest then the reference is added to that
+	// blob. If there is an error, it is of type Error.
+	Commit() (Descriptor, error)
 	// Cancel ends the writing process, cleaning up any temporary resources. If
 	// there is an error, it is of type *Error.
 	Cancel() error
@@ -41,9 +41,8 @@ type BlobWriter interface {
 // Descriptor describes a blob.
 type Descriptor interface {
 	Digest() string
-	MediaType() string
 	Size() uint64
-	References() []string
+	RefCount() uint64
 }
 
 // Blob is the interface for accessing a blob.

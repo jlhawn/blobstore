@@ -36,7 +36,7 @@ func newTestStore(t *testing.T) *localStore {
 	return ls
 }
 
-func writeRandomBlob(t *testing.T, testStore *localStore, blobSize uint64, refID string) Descriptor {
+func writeRandomBlob(t *testing.T, testStore *localStore, blobSize uint64) Descriptor {
 	bw, err := testStore.NewWriter(HashForLabel("sha256"))
 	if err != nil {
 		t.Fatalf("unable to make new blob writer: %s", err)
@@ -51,15 +51,14 @@ func writeRandomBlob(t *testing.T, testStore *localStore, blobSize uint64, refID
 
 	digest := fmt.Sprintf("sha256:%x", hasher.Sum(nil))
 
-	d, err := bw.Commit(randomDataMediaType, refID)
+	d, err := bw.Commit()
 	if err != nil {
 		t.Fatalf("unable to commit put of random blob: %s", err)
 	}
 
 	info := blobInfo{
-		Digest:    digest,
-		MediaType: randomDataMediaType,
-		Size:      blobSize,
+		Digest: digest,
+		Size:   blobSize,
 	}
 
 	ensureEqualDescriptors(t, d, newDescriptor(info), false)
@@ -76,12 +75,8 @@ func ensureEqualDescriptors(t *testing.T, d1, d2 Descriptor, checkRefs bool) {
 		t.Fatalf("blob size mismatch: %d != %d", d1.Size(), d2.Size())
 	}
 
-	if d1.MediaType() != d2.MediaType() {
-		t.Fatalf("media type mismatch: %q != %q", d1.MediaType(), d2.MediaType())
-	}
-
-	if checkRefs {
-		ensureEqualReferences(t, d1.References(), d2.References())
+	if checkRefs && d1.RefCount() != d2.RefCount() {
+		t.Fatalf("reference count mismatch: %d != %d", d1.RefCount(), d2.RefCount())
 	}
 }
 
@@ -114,8 +109,6 @@ func ensureEqualReferences(t *testing.T, refs1, refs2 []string) {
 func limitedRandReader(length uint64) io.Reader {
 	return io.LimitReader(rand.Reader, int64(length))
 }
-
-var randomDataMediaType = "application/random.data+octet-stream"
 
 func randomDigest(t *testing.T) string {
 	return fmt.Sprintf("sha256:%s", randomHexString(t))
